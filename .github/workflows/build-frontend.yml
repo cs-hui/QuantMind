@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: .            # 假设仓库根目录即项目根目录
+        working-directory: .           # 假设仓库根目录即项目根
 
     steps:
       - name: Checkout code
@@ -20,25 +20,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'       # 与 deploy.sh 中 NODE_VERSION 一致
+          node-version: '20.19.0'
           cache: 'npm'
-          cache-dependency-path: package-lock.json  # 或 yarn.lock
+          cache-dependency-path: package-lock.json
 
-      - name: Configure npm mirror
+      - name: Configure npm mirror (via .npmrc)
         run: |
-          npm config set registry https://registry.npmmirror.com
-          npm config set electron_mirror https://npmmirror.com/mirrors/electron/
-          npm config set electron_builder_binaries_mirror https://npmmirror.com/mirrors/electron-builder-binaries/
-          npm config set puppeteer_download_host https://npmmirror.com/mirrors
-          npm config set sass_binary_site https://npmmirror.com/mirrors/node-sass/
+          cat > .npmrc << 'EOF'
+          registry=https://registry.npmmirror.com
+          electron_mirror=https://npmmirror.com/mirrors/electron/
+          electron_builder_binaries_mirror=https://npmmirror.com/mirrors/electron-builder-binaries/
+          puppeteer_download_host=https://npmmirror.com/mirrors
+          sass_binary_site=https://npmmirror.com/mirrors/node-sass/
+          EOF
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build frontend production
         env:
-          NODE_OPTIONS: '--max-old-space-size=4096'   # 内存充足，兜底避免 OOM
-          VITE_API_BASE_URL: ''                       # 对应 deploy.sh 中的 env 设置
+          NODE_OPTIONS: '--max-old-space-size=4096'
+          VITE_API_BASE_URL: ''
         run: |
           mkdir -p electron/build
           cp electron/public/favicon.ico electron/build/icon.ico 2>/dev/null || true
